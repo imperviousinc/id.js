@@ -1,0 +1,45 @@
+{
+  "name": "@imperviousinc/id",
+  "version": "0.1.0-alpha",
+  "description": "A compact library for interacting with domains on the new internet. Supports Impervious domains, Forever and ENS.",
+  "main": "./dist/esm/index.js",
+  "scripts": {
+    "build": "node ./esbuild.js",
+    "test": "mocha --timeout 10000 --require esm 'test/**/*.test.js'",
+    "lint": "./node_modules/.bin/eslint --fix src/"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "default": "./dist/esm/index.js"
+    }
+  },
+  "keywords": [],
+  "author": "Impervious Inc",
+  "license": "ISC",
+  "dependencies": {
+    "buffer": "^6.0.3",
+    "dns-packet": "^5.6.0"
+  },
+  "peerDependencies": {
+    "ethers": "^6.3.0"
+  },
+  "devDependencies": {
+    "@esbuild-plugins/node-resolve": "^0.2.2",
+    "@nomiclabs/hardhat-ethers": "^3.0.0-beta.0",
+    "chai": "^4.3.7",
+    "chai-as-promised": "^7.1.1",
+    "dns-packet": "^5.6.0",
+    "dotenv": "^16.0.3",
+    "esbuild": "^0.17.18",
+    "eslint": "^8.39.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.27.5",
+    "esm": "^3.2.25",
+    "ethers": "^6.3.0",
+    "hardhat": "^2.14.0",
+    "mocha": "^10.2.0"
+  }
+}
