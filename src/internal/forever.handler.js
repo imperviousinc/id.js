@@ -211,7 +211,7 @@ export class ForeverHandler {
       ownershipType: 'emancipated',
       owner: registrarOwner.status === 'fulfilled' ? registrarOwner.value : ZeroAddress,
       reservedFor: null,
-      expiry: 0,
+      expiry: 0n,
       source: {
         name: 'forever.registrar',
         address: this.#registrar.target,

@@ -1,6 +1,6 @@
 {
   "name": "@imperviousinc/id",
-  "version": "0.1.0-alpha",
+  "version": "0.1.0-alpha.2",
   "description": "A compact library for interacting with domains on the new internet. Supports Impervious domains, Forever and ENS.",
   "main": "./dist/esm/index.js",
   "scripts": {

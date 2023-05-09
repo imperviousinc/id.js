@@ -1,9 +1,7 @@
-import {
-  Contract, Interface, ZeroAddress,
-} from 'ethers';
+import { Contract, Interface, ZeroAddress } from 'ethers';
 import { getContractAddress, Price } from './common/utils.js';
 import {
-  getRecords, Resolver, setRecords, encodeSetRecords, reverseLookup,
+  encodeSetRecords, getRecords, Resolver, reverseLookup, setRecords,
 } from './common/resolver.js';
 import { getControllerResolver, getMultiRegistryResolver } from './common/multiresolver.js';
 import { ERC137 } from './common/erc137.js';
@@ -219,6 +217,7 @@ export class EnsHandler {
   async requiresCommitment(domain) {
     return true;
   }
+
   /* eslint-enable class-methods-use-this, no-unused-vars  */
 
   async setManager(domain, to, options) {
@@ -301,8 +300,17 @@ export class EnsHandler {
     if (!options.to) {
       throw new Error('to address is required');
     }
+    if (!domain.isSLD()) {
+      throw new Error('Cannot transfer non-SLD');
+    }
+    if (domain.tld !== 'eth') {
+      throw new Error('Cannot transfer non-eth domain');
+    }
 
     const registration = await this.getRegistration(domain);
+    if (registration.status !== 'registered') {
+      throw new Error('Domain is not registered');
+    }
 
     const to = options.to;
     const signer = options?.signer || await this.#provider.getSigner();
@@ -314,7 +322,6 @@ export class EnsHandler {
       return nameWrapperWithSigner.safeTransferFrom(from, to, domain.namehash, 1, '0x');
     }
     if (registration.source.address === this.#registrar.target) {
-      if (!domain.isSLD()) throw new Error('Cannot transfer non-SLDs from the registrar');
       const registrarWithSigner = this.#registrar.connect(signer);
       return registrarWithSigner.safeTransferFrom(from, to, domain.sldHash);
     }
@@ -347,7 +354,7 @@ export class EnsHandler {
       ownershipType: 'emancipated',
       owner: ZeroAddress,
       reservedFor: null,
-      expiry: 0,
+      expiry: 0n,
       source: {
         name: 'ens.registry',
         address: this.#registry.target,
@@ -356,21 +363,36 @@ export class EnsHandler {
     };
 
     const data = await Promise.allSettled([
+      this.#controllerMulticall(domain, [
+        { name: 'available', args: [domain.sld] },
+      ]),
       this.#nameWrapper.getData(domain.namehash),
       this.#registry.owner(domain.namehash),
       this.#registrar.ownerOf(domain.sldHash),
       this.#registrar.nameExpires(domain.sldHash),
     ]);
 
-    const [nameWrapperData, registryOwner, registrarOwner, registrarExpiry] = data;
+    const [controllerResult, nameWrapperData, registryOwnerData, registrarOwnerData, registrarExpiry] = data;
+    const available = controllerResult.status === 'fulfilled'
+      ? controllerResult.value[0][0] : { success: false };
+
+    registration.status = !available.success || domain.tld !== 'eth' ? 'unknown'
+      : (available.data ? 'unregistered' : 'registered');
+
     if (nameWrapperData.status === 'rejected') {
-      throw new Error(`Failed to get name wrapper data: ${nameWrapperData.reason}`);
+      throw new Error(`Failed to get name wrapper: ${nameWrapperData.reason}`);
+    }
+    if (registryOwnerData.status === 'rejected') {
+      throw new Error(`Failed to get registry owner: ${registryOwnerData.reason}`);
     }
 
     const [nameWrapperOwner, , nameWrapperExpiry] = nameWrapperData.value;
+    const registryOwner = registryOwnerData.value;
 
-    if (nameWrapperOwner !== ZeroAddress) {
-      registration.status = 'registered';
+    if (nameWrapperOwner !== ZeroAddress
+      && registryOwner === this.#nameWrapper.target
+      && registrarOwnerData.status === 'fulfilled'
+      && registrarOwnerData.value === this.#nameWrapper.target) {
       registration.owner = nameWrapperOwner;
       registration.expiry = nameWrapperExpiry;
       registration.source.name = 'ens.nameWrapper';
@@ -379,9 +401,11 @@ export class EnsHandler {
     }
 
     // legacy names
-    if (registrarOwner.status === 'fulfilled' && registrarOwner.value !== ZeroAddress) {
-      registration.status = 'registered';
-      registration.owner = registrarOwner.value;
+    if (registrarOwnerData.status === 'fulfilled' && (
+      registrarOwnerData.value !== ZeroAddress
+      && registrarOwnerData.value !== this.#nameWrapper.target
+    )) {
+      registration.owner = registrarOwnerData.value;
       registration.expiry = registrarExpiry.value;
       registration.source.name = 'ens.registrar';
       registration.source.address = this.#registrar.target;
@@ -391,18 +415,26 @@ export class EnsHandler {
       return registration;
     }
 
-    if (registryOwner.status === 'fulfilled' && registryOwner.value === this.#nameWrapper.target) {
-      registration.owner = ZeroAddress;
+    // unregistered names show name wrapper as the source
+    if (registration.status === 'unregistered') {
+      registration.owner = nameWrapperOwner;
+      registration.expiry = nameWrapperExpiry;
       registration.source.name = 'ens.nameWrapper';
       registration.source.address = this.#nameWrapper.target;
       return registration;
     }
 
+    // everything else shows the registry as the source
     registration.owner = registryOwner.value;
     return registration;
   }
 
   async getOwner(domain) {
+    if (domain.isTLD()) {
+      if (domain.name === 'eth') return this.#registrar.owner();
+      return this.#registry.owner(domain.namehash);
+    }
+
     const data = await this.getRegistration(domain);
     return data.owner;
   }

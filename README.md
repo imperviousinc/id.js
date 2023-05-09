@@ -1,5 +1,5 @@
 
-<img src="./test/id.js.svg">
+<img src="https://github.com/imperviousinc/id.js/blob/main/test/id.js.svg">
 
 ⚠️ Note: this is still an alpha release.
 
@@ -39,7 +39,8 @@ const network = await provider.getNetwork() ;
 
 const id = new Id({network, provider});
 
-// Efficiently batch multiple requests with a single eth_call
+// Seamless batching: id.js queries resolvers and controllers on-chain
+// use Promise.all/allSettled to batch your calls.
 const results = await Promise.all([
   id.getOwner('live.forever'),
   id.getText('vitalik.eth', 'url'),
@@ -50,6 +51,7 @@ const results = await Promise.all([
   id.getRegistration('example.eth')
 ]);
 
+// it took a single RPC call to get all the results!
 console.log(results);
 ```
 

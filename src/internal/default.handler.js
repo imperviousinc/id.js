@@ -207,7 +207,7 @@ export class DefaultHandler {
       ownershipType: null,
       owner: ZeroAddress,
       reservedFor: null,
-      expiry: 0,
+      expiry: 0n,
       source: {
         name: 'impervious.registrar',
         address: this.#registry.target,

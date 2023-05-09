@@ -1,6 +1,7 @@
 import { expect, assert } from 'chai';
 import pkg from 'hardhat';
 import { createId, resetFork } from './utils.js';
+import {ZeroAddress} from "ethers";
 
 const { ethers } = pkg;
 
@@ -27,6 +28,18 @@ const expected = {
       name: 'ens.registrar',
       address: '0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85',
       id: '17256426415258880895198210160632585472269575254526856154457989302483090776653',
+    },
+  },
+  'nonexistentname123.eth': {
+    status: 'unregistered',
+    ownershipType: 'emancipated',
+    owner: ZeroAddress,
+    reservedFor: null,
+    expiry: 0n,
+    source: {
+      name: 'ens.nameWrapper',
+      address: '0xD4416b13d2b3a9aBae7AcD5D6C2BbDBE25686401',
+      id: '89215767674054714409203077802041400992681425730238558358435247218268918351722',
     },
   },
   'purplesauce.www': {
@@ -58,7 +71,7 @@ const expected = {
     ownershipType: null,
     owner: '0x0000000000000000000000000000000000000000',
     reservedFor: null,
-    expiry: 0,
+    expiry: 0n,
     source: {
       name: 'impervious.registrar',
       address: '0x06081C6B2B876EABDC41DFD3345e8Fa59588C02e',
@@ -70,7 +83,7 @@ const expected = {
     ownershipType: null,
     owner: '0x0000000000000000000000000000000000000000',
     reservedFor: '0xC4f1051c5bD738FD7cf0F6E680c6c0A8B6157aEe',
-    expiry: 0,
+    expiry: 0n,
     source: {
       name: 'impervious.registrar',
       address: '0x06081C6B2B876EABDC41DFD3345e8Fa59588C02e',
@@ -82,7 +95,7 @@ const expected = {
     ownershipType: 'emancipated',
     owner: '0x0000000000000000000000000000000000000000',
     reservedFor: null,
-    expiry: 0,
+    expiry: 0n,
     source: {
       name: 'forever.registrar',
       address: '0x8436F16c090B0A6B2A7ae4CfCc82E007302a4b38',
@@ -94,7 +107,7 @@ const expected = {
     ownershipType: 'emancipated',
     owner: '0x0000000000000000000000000000000000000000',
     reservedFor: null,
-    expiry: 0,
+    expiry: 0n,
     source: {
       name: 'forever.registrar',
       address: '0x8436F16c090B0A6B2A7ae4CfCc82E007302a4b38',
